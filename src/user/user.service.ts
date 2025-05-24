@@ -1,32 +1,44 @@
-/* eslint-disable @typescript-eslint/require-await */
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { AuthenticatedRequest } from 'src/auth/guards/auth.guard';
-import { AuthInput, User } from 'src/types/user';
+import { User } from './schema/user.schema';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { UserResponse } from './dto/user.dto';
+import { SignInRequest } from 'src/auth/dto/login-auth.dto';
 
 @Injectable()
 export class UserService {
-  private users: User[] = [
-    { userId: 1, username: 'Hasibul', password: '123' },
-    { userId: 2, username: 'Saber', password: '123' },
-  ];
+  constructor(
+    @InjectModel(User.name) private readonly userModel: Model<User>,
+  ) {}
 
-  async register(input: AuthInput): Promise<User | undefined> {
-    const user = { ...input, userId: this.users.length + 1 };
-    this.users.push(user);
-    return user;
+  async createUser(input: SignInRequest): Promise<User> {
+    try {
+      const newUser = await this.userModel.create(input);
+      return newUser;
+    } catch (error) {
+      console.log(error);
+      throw new InternalServerErrorException();
+    }
   }
 
   async findUserByUsername(username: string): Promise<User | undefined> {
-    const user = this.users.find((item: User) => item.username === username);
-    return user;
+    try {
+      const user = await this.userModel.findOne({ username });
+      if (!user) {
+        return;
+      }
+      return user;
+    } catch {
+      return undefined;
+    }
   }
 
   async findCurrentLoggedInUser(
     request: AuthenticatedRequest,
-  ): Promise<User | undefined> {
+  ): Promise<UserResponse | undefined> {
     const username = request.user?.username;
-    const user = this.users.find((item: User) => item.username === username);
-    delete user?.password;
-    return user;
+    const user = await this.findUserByUsername(username!);
+    return UserResponse.build(user!);
   }
 }

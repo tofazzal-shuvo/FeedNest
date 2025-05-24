@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
-import { User } from 'src/types/user';
+import { User } from 'src/user/schema/user.schema';
 
 export interface AuthenticatedRequest extends Request {
   user?: User;
@@ -24,7 +24,6 @@ export class AuthGuard implements CanActivate {
     const token = authorization?.split(' ')[1];
     try {
       const user = await this.jwtService.verifyAsync<User>(token);
-      delete user.password;
       request.user = user;
       return true;
     } catch (err) {
