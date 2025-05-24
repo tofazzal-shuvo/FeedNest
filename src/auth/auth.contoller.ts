@@ -12,7 +12,7 @@ export class AuthController {
 
   @Post('login')
   login(@Body() input: AuthInput) {
-    return this.authService.authenticateUser(input);
+    return this.authService.jwtAuthentication(input);
   }
   @Post('register')
   register(@Body() input: AuthInput) {

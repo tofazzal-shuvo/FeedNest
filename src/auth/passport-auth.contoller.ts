@@ -1,8 +1,9 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post, Request, UseGuards } from '@nestjs/common';
 import { AuthInput } from 'src/types/user';
 import { AuthService } from './auth.service';
 import { UserService } from 'src/user/user.service';
 import { PassportLocalGuard } from './guards/passport-local.guard';
+import { AuthenticatedRequest } from './guards/auth.guard';
 
 @Controller('auth-v2')
 export class PassportAuthController {
@@ -13,8 +14,8 @@ export class PassportAuthController {
 
   @Post('login')
   @UseGuards(PassportLocalGuard)
-  login(@Body() input: AuthInput) {
-    return this.authService.authenticateUser(input);
+  login(@Request() request: AuthenticatedRequest) {
+    return this.authService.SigIn(request.user!);
   }
   @Post('register')
   register(@Body() input: AuthInput) {

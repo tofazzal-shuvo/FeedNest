@@ -10,15 +10,27 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async authenticateUser(authData: AuthInput): Promise<AuthResult> {
-    const user = await this.userService.findUserByUsername(authData.username);
-    if (!user || user.password !== authData.password) {
+  async jwtAuthentication(authData: AuthInput): Promise<AuthResult> {
+    const user = await this.validateUser(authData);
+    if (!user) {
       throw new UnauthorizedException();
     }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password, ...rest } = user;
+    const authResult = await this.SigIn(user);
+    return authResult;
+  }
+  async validateUser(authData: AuthInput) {
+    const user = await this.userService.findUserByUsername(authData.username);
+    if (user && user.password === authData.password) {
+      return {
+        userId: user.userId,
+        username: user.username,
+      };
+    }
+    return null;
+  }
+  async SigIn(user: User) {
     const accessToken = await this.generateToken(user);
-    return { user: rest, accessToken };
+    return { user, accessToken };
   }
 
   async generateToken(user: User): Promise<string> {
